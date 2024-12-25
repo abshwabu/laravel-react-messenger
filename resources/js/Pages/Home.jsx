@@ -10,7 +10,10 @@ import { Head } from '@inertiajs/react';
 }
 
 Home.layout = (page) => (
-    <AuthenticatedLayout> 
+    <AuthenticatedLayout
+    user={page.props.user}
+    > 
+        
         <ChatLayout children={page}/>
     </AuthenticatedLayout>
 );
