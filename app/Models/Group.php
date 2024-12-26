@@ -58,4 +58,11 @@ class Group extends Model
             'type' => 'group',
         ];
     }
+
+    public function updateGroupWithMessage($groupId, $messageId)
+    {
+        return self::updateOrCreate(['id' => $groupId], [
+            'last_message_id' => $messageId,
+        ]);
+    }
 }
