@@ -2,9 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
-.convesation-item .avatar.online:before{
+#app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+.convesation-item .avatar.online:before,
+.convesation-item .avatar.offline:before{
     width: 8px;
     height: 8px;
     top: 1%;
     right: 1%;
+    outline-width: 1px;
 }
