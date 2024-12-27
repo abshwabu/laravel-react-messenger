@@ -2,15 +2,18 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import ChatLayout from '@/Layouts/ChatLayout';
 import { ChatBubbleLeftRightIcon } from '@heroicons/react/24/solid';
 import { Head } from '@inertiajs/react';
-import React, { useEffect, useState } from 'react';
+import React, { use, useEffect, useRef, useState } from 'react';
 import ConversationHeader from '@/Components/App/ConversationHeader';
 import MessageItem from '@/Components/App/MessageItem';
 
-function Home({ selectedConversation = null, messages = null }) {
-    console.log('messages', messages);
-    
+function Home({ selectedConversation, messages = null }) {
     const [localMessages, setLocalMessages] = useState([]);
-    const messageCtrRef = React.useRef(null);
+    const messageCtrRef = useRef(null);
+
+    useEffect(() => {
+        messageCtrRef.current.scrollTop = messageCtrRef.current.scrollHeight;
+    }, [selectedConversation]);
+
     useEffect(() => {
         setLocalMessages(messages ? messages.data.reverse() : []);
     }, [messages]);

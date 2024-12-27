@@ -7,8 +7,8 @@
     flex-direction: column;
     height: 100vh;
 }
-.convesation-item .avatar.online:before,
-.convesation-item .avatar.offline:before{
+.converation-item .avatar.online:before,
+.converation-item .avatar.offline:before{
     width: 8px;
     height: 8px;
     top: 1%;

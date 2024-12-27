@@ -1,24 +1,38 @@
-import { Link, usePage } from "@inertiajs/react";
-import { ArrowLeftIcon } from "@heroicons/react/24/solid";
-import UserAvatar from "./UserAvatar";
-import GroupAvatar from "./GroupAvatar";
-import React from 'react';
+import UserAvatar from './UserAvatar';
+import GroupAvatar from './GroupAvatar';
+import { Link } from '@inertiajs/react';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 const ConversationHeader = ({ selectedConversation }) => {
-    if (!selectedConversation) {
-        return null; // Return null if selectedConversation is undefined
-    }
-
+    console.log('Selected Conversation in ConversationHeader:', selectedConversation); // Log to check the value
+    
     return (
-        <div className="conversation-header">
-            <h2>{selectedConversation.name}</h2>
-            {selectedConversation.is_user && (
-                <p>User Conversation</p>
+        <>
+            {selectedConversation && (
+                <div className="p-3 flex justify-between items-center border-b border-slate-700">
+                    <div className="flex items-center gap-3">
+                        <Link
+                            href={route("dashboard")}
+                            className="inline-block sm:hidden"
+                        >
+                            <ArrowLeftIcon className="w-6" />
+                        </Link>
+                        {selectedConversation.is_user && (
+                            <UserAvatar user={selectedConversation} />
+                        )}
+                        {selectedConversation.is_group && <GroupAvatar />}
+                        <div>
+                            <h3>{selectedConversation.name}</h3>
+                            {selectedConversation.is_group && (
+                                <p className="text-xs text-gray-500">
+                                    {selectedConversation.users.length} members
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                </div>
             )}
-            {selectedConversation.is_group && (
-                <p>Group Conversation</p>
-            )}
-        </div>
+        </>
     );
 };
 

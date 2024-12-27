@@ -21,7 +21,7 @@ class MessageController extends Controller
             ->paginate(10)
             ;
             return inertia('Home', [
-                'selectedConvesation' => $user->toConversationArray(),
+                'selectedConversation' => $user->toConversationArray(),
                 'messages' => MessageResource::collection($messages),
             ]);
     }
@@ -33,7 +33,7 @@ class MessageController extends Controller
             ->paginate(10)
             ;
             return inertia('Home', [
-                'selectedConvesation' => $group->toConversationArray(),
+                'selectedConversation' => $group->toConversationArray(),
                 'messages' => MessageResource::collection($messages),
             ]);
     }
