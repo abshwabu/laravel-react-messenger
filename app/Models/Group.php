@@ -59,10 +59,11 @@ class Group extends Model
         ];
     }
 
-    public function updateGroupWithMessage($groupId, $messageId)
+    public function updateGroupWithMessage($message)
     {
-        return self::updateOrCreate(['id' => $groupId], [
-            'last_message_id' => $messageId,
+        return $this->update([
+            'last_message_id' => is_object($message) ? $message->id : $message,
+            'updated_at' => now()
         ]);
     }
 }

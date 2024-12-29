@@ -11,7 +11,7 @@ class Conversation extends Model
 {
     use HasFactory;
 
-    protected $filable = ['user_id1', 'user_id2', 'last_message_id'];
+    protected $fillable = ['user_id1', 'user_id2', 'last_message_id', 'conversation_id', 'group_id'];
 
     public function user1()
     {
@@ -34,23 +34,14 @@ class Conversation extends Model
         }));
     }
 
-    public static function updateConversationWithMessage($userId1, $userId2, $messageId){
-        $conversation = self::where('user_id1', $userId1)
-            ->where('user_id2', $userId2)
-            ->orWhere('user_id1', $userId2)
-            ->where('user_id2', $userId1)
-            ->first();
-
-        if($conversation){
-            $conversation->update([
-                'last_message_id' => $messageId,
-            ]);
-        }else{
-            self::create([
-                'user_id1' => $userId1,
-                'user_id2' => $userId2,
-                'last_message_id' => $messageId,
-            ]);
-        }
+    public static function updateConversationWithMessage($conversation, $message)
+    {
+        // Make sure we have the message ID, not the whole message object
+        $messageId = is_object($message) ? $message->id : $message;
+        
+        return $conversation->update([
+            'last_message_id' => $messageId,
+            'updated_at' => now()
+        ]);
     } 
 }

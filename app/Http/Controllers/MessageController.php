@@ -8,6 +8,11 @@ use App\Models\User;
 use App\Models\Group;
 use App\Http\Requests\StoreMessageRequest;
 use App\Http\Resources\MessageResource;
+use App\Models\MessageAtachment;
+use App\Models\Conversation;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use App\Events\SocketMessage;
 
 class MessageController extends Controller
 {
@@ -70,41 +75,75 @@ class MessageController extends Controller
     {
         $data = $request->validated();
         $data['sender_id'] = auth()->id();
-        $reciver_id = $data['reciver_id'] ?? null;
-        $group_id = $data['group_id'] ?? null;
-        $files = $data['files'] ?? [];
-        $message = Message::create($data);
+        
+        // Debug the incoming data
+        \Log::info('Message Data:', $data);
+        
+        // Make sure either reciver_id or group_id is set
+        if (!isset($data['reciver_id']) && !isset($data['group_id'])) {
+            return response()->json(['error' => 'Either receiver or group must be specified'], 422);
+        }
 
+        // Create the message
+        $message = Message::create([
+            'message' => $data['message'],
+            'sender_id' => $data['sender_id'],
+            'reciver_id' => $data['reciver_id'] ?? null,
+            'group_id' => $data['group_id'] ?? null,
+        ]);
+
+        // Handle file attachments
+        $files = $data['attachments'] ?? [];
         $attachments = [];
-        if($files){
-            foreach($files as $file){
-                $directory = 'attachments/' .Str::random(25);
+        if ($files) {
+            foreach ($files as $file) {
+                $directory = 'attachments/' . Str::random(32);
                 Storage::makeDirectory($directory);
 
-                $model =[
+                $model = [
                     'message_id' => $message->id,
                     'name' => $file->getClientOriginalName(),
-                    'path' => $file->store($directory, 'public'),
                     'mime' => $file->getClientMimeType(),
                     'size' => $file->getSize(),
+                    'path' => $file->store($directory, 'public'),
                 ];
-                $attachment = MessageAtachment::create($model);
+                $attachment = MessageAttachment::create($model);
                 $attachments[] = $attachment;
             }
             $message->attachments = $attachments;
         }
-        if($reciver_id){
-            Conversation::updateConversationWithMessage($reciver_id, auth()->id(), $message);
-        }
-        if($group_id){
-            Group::updateGroupWithMessage($group_id, $message);
+
+        // Update conversation for user messages
+        if (isset($data['reciver_id'])) {
+            $conversation = Conversation::where(function($query) use ($data) {
+                $query->where('user_id1', auth()->id())
+                      ->where('user_id2', $data['reciver_id']);
+            })->orWhere(function($query) use ($data) {
+                $query->where('user_id1', $data['reciver_id'])
+                      ->where('user_id2', auth()->id());
+            })->first();
+
+            if (!$conversation) {
+                $conversation = Conversation::create([
+                    'user_id1' => auth()->id(),
+                    'user_id2' => $data['reciver_id'],
+                ]);
+            }
+
+            Conversation::updateConversationWithMessage($conversation, $message);
         }
 
+        // Update group for group messages
+        if (isset($data['group_id'])) {
+            $group = Group::findOrFail($data['group_id']);
+            $group->updateGroupWithMessage($message);
+        }
+
+        // Dispatch the socket event
         SocketMessage::dispatch($message);
 
         return new MessageResource($message);
     }
-
     public function destroy(Message $message)
     {
         if($message->sender_id != auth()->id()){

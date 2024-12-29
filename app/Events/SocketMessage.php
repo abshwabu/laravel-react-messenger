@@ -9,6 +9,8 @@ use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
+use App\Models\Message;
+use App\Http\Resources\MessageResource;
 
 class SocketMessage implements ShouldBroadcastNow
 {
@@ -32,10 +34,11 @@ class SocketMessage implements ShouldBroadcastNow
         $m = $this->meassage;
         $channel =[];
         if($m->group_id){
-            $channel[] = new PrivetChannel("message.group.{$m->group_id}");
+            $channel[] = new PrivateChannel("message.group.{$m->group_id}");
         }else{
-            $channel[] = new PrivetChannel("message.user.".collect([$m->sender_id, $m->reciver_id])->sort()->implode('-'));
+            $channel[] = new PrivateChannel("message.user.".collect([$m->sender_id, $m->reciver_id])->sort()->implode('-'));
         }
+        return $channel;
     }
 
     public function broadcastWith(): array
