@@ -139,8 +139,8 @@ class MessageController extends Controller
             $group->updateGroupWithMessage($message);
         }
 
-        // Dispatch the socket event
-        SocketMessage::dispatch($message);
+        // Dispatch the socket event immediately after message creation
+        broadcast(new SocketMessage($message))->toOthers();
 
         return new MessageResource($message);
     }

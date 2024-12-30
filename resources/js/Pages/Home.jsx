@@ -9,34 +9,32 @@ import MessageInput from '@/Components/App/MessageInput';
 
 function Home({ selectedConversation=null, messages = null }) {
     const [localMessages, setLocalMessages] = useState([]);
-    const [error, setError] = useState(null);
     const messageCtrRef = useRef(null);
 
     useEffect(() => {
-        if (messageCtrRef.current) {
-            setTimeout(()=>{
-                messageCtrRef.current.scrollTop = messageCtrRef.current.scrollHeight;
-            },100)
-        }
-    }, [selectedConversation]);
+        // Listen for new messages
+        const handleNewMessage = (e) => {
+            const message = e.detail;
+            setLocalMessages(prevMessages => [message, ...prevMessages]);
+            
+            // Scroll to bottom on new message
+            setTimeout(() => {
+                if (messageCtrRef.current) {
+                    messageCtrRef.current.scrollTop = messageCtrRef.current.scrollHeight;
+                }
+            }, 100);
+        };
+
+        window.addEventListener('message.created', handleNewMessage);
+
+        return () => {
+            window.removeEventListener('message.created', handleNewMessage);
+        };
+    }, []);
 
     useEffect(() => {
-        try {
-            setLocalMessages(messages ? messages.data.reverse() : []);
-        } catch (err) {
-            console.error('Error setting messages:', err);
-            setError('Failed to load messages');
-        }
+        setLocalMessages(messages ? messages.data.reverse() : []);
     }, [messages]);
-
-    // Add error display
-    if (error) {
-        return (
-            <div className="flex justify-center items-center h-full">
-                <div className="text-red-500">{error}</div>
-            </div>
-        );
-    }
 
     return (
         <>
@@ -48,36 +46,36 @@ function Home({ selectedConversation=null, messages = null }) {
                     <ChatBubbleLeftRightIcon className="w-32 h-32 inline-block" />
                 </div>
             )}
-            {messages && selectedConversation && (
+            {messages && (
                 <>
-                    <ConversationHeader
-                        selectedConversation={selectedConversation}
-                    />
-                    <div
-                        ref={messageCtrRef}
-                        className="flex-1 overflow-y-auto p-5"
-                    >
-                        {localMessages.length === 0 && (
-                            <div className="flex justify-center items-center h-full">
-                                <div className="text-lg text-slate-200">
-                                    No messages found
-                                </div>
+                <ConversationHeader
+                    selectedConversation={selectedConversation}
+                />
+                <div
+                    ref={messageCtrRef}
+                    className="flex-1 overflow-y-auto p-5"
+                >
+                    {localMessages.length === 0 && (
+                        <div className="flex justify-center items-center h-full">
+                            <div className="text-lg text-slate-200">
+                                No messages found
                             </div>
-                        )}
-                        {localMessages.length > 0 && (
-                            <div className="flex-1 flex flex-col">
-                                {/* <div ref={loadMoreIntersect}></div> */}
-                                {localMessages.map((message) => (
-                                    <MessageItem
-                                        key={message.id}
-                                        message={message}
-                                        // attachmentClick={onAttachmentClick}
-                                    />
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                    <MessageInput conversation={selectedConversation} />
+                        </div>
+                    )}
+                    {localMessages.length > 0 && (
+                        <div className="flex-1 flex flex-col">
+                            {/* <div ref={loadMoreIntersect}></div> */}
+                            {localMessages.map((message) => (
+                                <MessageItem
+                                    key={message.id}
+                                    message={message}
+                                    // attachmentClick={onAttachmentClick}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </div>
+                <MessageInput conversation={selectedConversation} />
                 </>
             )}
         </>
