@@ -6,31 +6,34 @@ import React, { use, useEffect, useRef, useState } from 'react';
 import ConversationHeader from '@/Components/App/ConversationHeader';
 import MessageItem from '@/Components/App/MessageItem';
 import MessageInput from '@/Components/App/MessageInput';
+import { useEventBus } from '@/EventBus';
 
 function Home({ selectedConversation=null, messages = null }) {
     const [localMessages, setLocalMessages] = useState([]);
     const messageCtrRef = useRef(null);
+    const { on } = useEventBus();
 
     useEffect(() => {
-        // Listen for new messages
-        const handleNewMessage = (e) => {
-            const message = e.detail;
-            setLocalMessages(prevMessages => [message, ...prevMessages]);
+        setTimeout(() => {
+            if (messageCtrRef.current) {
+                messageCtrRef.current.scrollTop = messageCtrRef.current.scrollHeight;
+            }
+        }, 100);
+        const unsubscribe = on('message.created', (message) => {
+            if(selectedConversation && selectedConversation.is_group && selectedConversation.id == message.group_id){
+                setLocalMessages(prevMessages => [...prevMessages, message]);
+            }
+            if(selectedConversation && selectedConversation.is_user && (selectedConversation.id == message.sender_id
+                 || selectedConversation.id == message.reciver_id)){
+                setLocalMessages(prevMessages => [...prevMessages, message]);
+            }
             
-            // Scroll to bottom on new message
-            setTimeout(() => {
-                if (messageCtrRef.current) {
-                    messageCtrRef.current.scrollTop = messageCtrRef.current.scrollHeight;
-                }
-            }, 100);
-        };
-
-        window.addEventListener('message.created', handleNewMessage);
+        });
 
         return () => {
-            window.removeEventListener('message.created', handleNewMessage);
+            unsubscribe();
         };
-    }, []);
+    }, [selectedConversation]);
 
     useEffect(() => {
         setLocalMessages(messages ? messages.data.reverse() : []);

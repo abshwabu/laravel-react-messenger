@@ -16,14 +16,12 @@ export default function AuthenticatedLayout({ header, children }) {
 
     useEffect(() => {
         conversations.forEach((conversation) => {
-            let channel = `message.group.${conversation}`;
-
-            if (conversation.is_user) {
-                channel = `message.user.${[
+            let channel = conversation.is_user 
+                ? `message.user.${[
                     parseInt(user.id),
                     parseInt(conversation.id)
-                ].sort((a, b) => a - b).join('-')}`
-            }
+                  ].sort((a, b) => a - b).join('-')}`
+                : `message.group.${conversation.id}`;
 
             Echo.private(channel).listen('SocketMessage', (e) => {
                 console.log('message', e);
@@ -39,7 +37,7 @@ export default function AuthenticatedLayout({ header, children }) {
                     user: message.sender,
                     group: message.group_id,
                     message: message.message || `shared ${
-                        message.attachments.length === 1 ? 'a file' : message.attachments.length + ' files'
+                        message.attachments?.length === 1 ? 'a file' : message.attachments?.length + ' files'
                     }`
                 });
             });
@@ -47,13 +45,12 @@ export default function AuthenticatedLayout({ header, children }) {
 
         return () => {
             conversations.forEach((conversation) => {
-                let channel = `message.group.${conversation}`;
-                if (conversation.is_user) {
-                    channel = `message.user.${[
+                let channel = conversation.is_user
+                    ? `message.user.${[
                         parseInt(user.id),
                         parseInt(conversation.id)
-                    ].sort((a, b) => a - b).join('-')}`
-                }
+                      ].sort((a, b) => a - b).join('-')}`
+                    : `message.group.${conversation.id}`;
                 Echo.leave(channel);
             });
         }
